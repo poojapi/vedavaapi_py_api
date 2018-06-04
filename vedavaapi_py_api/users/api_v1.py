@@ -12,7 +12,7 @@ from vedavaapi_py_api.users import get_db
 from vedavaapi_py_api.users.oauth import OAuthSignIn
 
 logging.basicConfig(
-  level=logging.DEBUG,
+  level=logging.INFO,
   format="%(levelname)s: %(asctime)s {%(filename)s:%(lineno)d}: %(message)s "
 )
 
@@ -353,7 +353,7 @@ class PasswordLogin(flask_restplus.Resource):
       session['user'] = user.to_json_map()
     # logging.debug(request.args)
     # Example request.args: {'code': '4/BukA679ASNPe5xvrbq_2aJXD_OKxjQ5BpCnAsCqX_Io', 'state': 'http://localhost:63342/vedavaapi/ullekhanam-ui/docs/v0/html/viewbook.html?_id=59adf4eed63f84441023762d'}
-    next_url = request.args.get('state')
+    next_url = request.form.get('next_url')
     if next_url is not None:
       # Not using redirect(next_url) because:
       #   Attempting to redirect to file:///home/vvasuki/ullekhanam-ui/docs/v0/html/viewbook.html?_id=59adf4eed63f84441023762d failed with "unsafe redirect."

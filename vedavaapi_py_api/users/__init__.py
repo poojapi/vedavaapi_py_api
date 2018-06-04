@@ -27,7 +27,8 @@ def setup(db, initial_users=None, default_permissions_in=None):
       matching_users = users_db.get_matching_users_by_auth_infos(user=initial_user)
       if len(matching_users) == 0:
         logging.info("Adding: " + str(initial_user))
-        users_db.update_doc(initial_user_dict)
+        # Use this instead of update_doc to auto-generate auth_secret_bcrypt
+        initial_user.update_collection(db_interface=users_db)
       else:
         logging.info("Not adding: " + str(initial_user))
 

@@ -10,7 +10,7 @@ from base64 import b64encode
 import flask
 import jsonpickle
 import os
-from flask import url_for
+from flask import url_for, send_from_directory
 from flask_cors import CORS
 
 """ The flask app we serve in run.py.
@@ -33,12 +33,16 @@ app.config.update(
   SESSION_COOKIE_NAME="vedavaapi_session",
 )
 
+(cmddir, cmdname) = os.path.split(__file__)
 
 @app.route('/')
 def index():
   flask.session['logstatus'] = 1
-  return flask.redirect('static/api_docs_index.html')
+  return flask.redirect('local/api_docs_index.html')
 
+@app.route('/local/<path:path>')
+def static_file(path):
+  return send_from_directory(os.path.join(app.root_path, 'static'), path)
 
 # Cant use flask-sitemap - won't list flask restplus routes.
 @app.route("/sitemap")

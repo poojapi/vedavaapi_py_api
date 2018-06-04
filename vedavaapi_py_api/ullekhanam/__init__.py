@@ -10,7 +10,7 @@ import logging
 from sanskrit_data.schema import *  # pylint: disable=unused-import.
 
 logging.basicConfig(
-  level=logging.DEBUG,
+  level=logging.INFO,
   format="%(levelname)s: %(asctime)s {%(filename)s:%(lineno)d}: %(message)s "
 )
 

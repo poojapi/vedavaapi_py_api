@@ -16,7 +16,7 @@ from sanskrit_data.schema.common import JsonObject
 from vedavaapi_py_api.ullekhanam.backend import get_db
 
 logging.basicConfig(
-  level=logging.DEBUG,
+  level=logging.INFO,
   format="%(levelname)s: %(asctime)s {%(filename)s:%(lineno)d}: %(message)s "
 )
 
@@ -243,7 +243,7 @@ class EntityListHandler(flask_restplus.Resource):
 
   @api.expect(post_parser, validate=False)
   @api.doc(responses={
-    200: 'Update success.',
+    200: 'Update/insert success.',
     401: 'Unauthorized. Use ../auth/v1/oauth_login/google to login and request access at https://github.com/vedavaapi/vedavaapi_py_api .',
     417: 'JSON schema validation error.',
     418: "Target entity class validation error."
@@ -291,7 +291,7 @@ class EntityListHandler(flask_restplus.Resource):
 
   @api.expect(post_parser, validate=False)
   @api.doc(responses={
-    200: 'Update success.',
+    200: 'Delete success.',
     401: 'Unauthorized. Use /auth/v1/oauth_login/google to login and request access at https://github.com/vedavaapi/vedavaapi_py_api .',
   })
   def delete(self, db_id):
