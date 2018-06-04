@@ -19,14 +19,13 @@ from sanskrit_data.schema.common import JsonObject
 
 # Add parent directory to PYTHONPATH, so that vedavaapi_py_api module can be found.
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-print(sys.path)
 
 from vedavaapi_py_api import common, textract, ullekhanam
 from sanskrit_data import file_helper
 from vedavaapi_py_api.common.flask_helper import app
 
 logging.basicConfig(
-  level=logging.DEBUG,
+  level=logging.INFO,
   format="%(levelname)s: %(asctime)s {%(filename)s:%(lineno)d}: %(message)s "
 )
 
@@ -35,11 +34,12 @@ params = JsonObject()
 params.set_from_dict({
   'debug': False,
   'port': 9000,
+  'reset': False
 })
 
 
 def setup_app():
-  common.set_configuration(config_file_name=os.path.join(os.path.dirname(__file__), 'server_config_local.json'))
+  common.set_configuration(config_file_name=os.path.join(os.path.dirname(__file__), 'conf_local/server_config.json'))
   server_config = common.server_config
 
   client = None
@@ -50,6 +50,13 @@ def setup_app():
     from sanskrit_data.db.implementations import mongodb
     client = mongodb.Client(url=server_config["db"]["mongo_host"])
 
+  if params.reset:
+    print "Deleting database/collection", server_config["db"]["users_db_name"]
+    client.delete_database(server_config["db"]["users_db_name"])
+    for db_details in server_config["db"]["ullekhanam_dbs"]:
+        print "Deleting database/collection", db_details["backend_id"]
+        client.delete_database(db_details["backend_id"])
+
   from vedavaapi_py_api import users
   users.setup(db=client.get_database_interface(db_name_backend=server_config["db"]["users_db_name"], db_name_frontend="users", db_type="users_db"),
               initial_users=server_config["initial_users"], default_permissions_in=server_config["default_permissions"])
@@ -58,10 +65,10 @@ def setup_app():
   # ullekhanam is the main database/ service.
   from vedavaapi_py_api.ullekhanam.backend import add_db
   for db_details in server_config["db"]["ullekhanam_dbs"]:
-    add_db(db=client.get_database_interface(db_name_backend=db_details["backend_id"], db_name_frontend=db_details["frontend_id"], external_file_store=db_details.get("file_store"), db_type="ullekhanam_db"))
+    add_db(db=client.get_database_interface(db_name_backend=db_details["backend_id"],
+    db_name_frontend=db_details["frontend_id"], external_file_store=db_details.get("file_store"), db_type="ullekhanam_db"), reimport=params.reset)
 
   logging.info("Root path: " + app.root_path)
-  logging.info(app.instance_path)
   import vedavaapi_py_api.users.api_v1
   import vedavaapi_py_api.ullekhanam.api_v1
   import vedavaapi_py_api.textract.api_v1
@@ -69,17 +76,19 @@ def setup_app():
   app.register_blueprint(textract.api_v1.api_blueprint, url_prefix="/textract")
   app.register_blueprint(ullekhanam.api_v1.api_blueprint, url_prefix="/ullekhanam")
 
-
 def main(argv):
   def usage():
     logging.info("run.py [--port 4444]...")
     exit(1)
 
+  global params
   try:
-    opts, args = getopt.getopt(argv, "dp:h", ["port=", "debug="])
+    opts, args = getopt.getopt(argv, "drp:h", ["port=", "debug="])
     for opt, arg in opts:
       if opt == '-h':
         usage()
+      if opt == '-r':
+        params.reset = True
       elif opt in ("-p", "--port"):
         params.port = int(arg)
       elif opt in ("-d", "--debug"):
