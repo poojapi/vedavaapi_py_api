@@ -108,7 +108,7 @@ class ImageBookList(BookList):
       allowed_extensions = {".jpg", ".png", ".gif"}
       if not is_extension_allowed(input_filename, allowed_extensions):
         message = {
-          "message": "Only these extensionsa are allowed: %(exts)s, but filename is %(input_filename)s" % dict(exts=str(allowed_extensions), input_filename=input_filename) ,
+          "message": "Only these extensions are allowed: %(exts)s, but filename is %(input_filename)s" % dict(exts=str(allowed_extensions), input_filename=input_filename) ,
         }
         logging.error(message)
         return message, 418
@@ -132,7 +132,8 @@ class ImageBookList(BookList):
         input_filename = os.path.basename(uploaded_file.filename)
         logging.debug(input_filename)
         original_file_path = join(page_storage_path, "original__" + input_filename)
-        os.makedirs(os.path.dirname(original_file_path), exist_ok=True)
+        if not os.path.exists(os.path.dirname(original_file_path)):
+            os.makedirs(os.path.dirname(original_file_path))
         uploaded_file.save(original_file_path)
 
         image_file_name = "content.jpg"

@@ -3,7 +3,7 @@
 """
 This is the main entry point. It does the following
 
--  starts the webservice (either as an indpendent flask server, or as an apache WSGI module)
+-  starts the webservice (either as an independent flask server, or as an apache WSGI module)
 -  sets up actions to be taken when various URL-s are accessed.
 """
 
@@ -56,10 +56,14 @@ def setup_app():
     for db_details in server_config["db"]["ullekhanam_dbs"]:
         print "Deleting database/collection", db_details["backend_id"]
         client.delete_database(db_details["backend_id"])
+        if "file_store" in db_details:
+            try:
+                os.system("rm -rf " + db_details["file_store"])
+            except Exception as e:
+                logging.error("Error removing " + db_details["file_store"]+": "+ e)
 
   from vedavaapi_py_api import users
-  users.setup(db=client.get_database_interface(db_name_backend=server_config["db"]["users_db_name"], db_name_frontend="users", db_type="users_db"),
-              initial_users=server_config["initial_users"], default_permissions_in=server_config["default_permissions"])
+  users.setup(db=client.get_database_interface(db_name_backend=server_config["db"]["users_db_name"], db_name_frontend="users", db_type="users_db"), initial_users=server_config["initial_users"], default_permissions_in=server_config["default_permissions"])
 
   # Set up ullekhanam API databases.
   # ullekhanam is the main database/ service.
@@ -78,7 +82,8 @@ def setup_app():
 
 def main(argv):
   def usage():
-    logging.info("run.py [--port 4444]...")
+    logging.info("run.py [-d] [-r] [--port 4444]...")
+    logging.info("run.py -h")
     exit(1)
 
   global params

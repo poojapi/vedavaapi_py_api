@@ -7,6 +7,56 @@ import sanskrit_data.schema.common as common_data_containers
 from sanskrit_data.schema.users import *
 from sanskrit_data.schema.ullekhanam import *
 
+class VedavaapiClient():
+    def __init__(self, url):
+        self.baseurl = url.rstrip('/')
+        self.session = requests.Session()
+        self.authenticated = False
+
+    def authenticate(self, creds=None):
+        if self.authenticated or not creds:
+            return True
+        print "Authenticating to Vedavaapi Server with username {} and password {}".format(creds.user, creds.passwd)
+        r = self.post("auth/v1/password_login", {'user_id' : creds['user'], 'user_secret': creds['passwd'] })
+        if not r:
+            print "Authentication failed."
+        self.authenticated = (r is not None)
+        return self.authenticated
+
+    def get(self, url, parms = {}):
+        url = self.baseurl + "/" + url
+        print "{} {}".format("GET", url)
+        try:
+            r = self.session.get(url, params=parms)
+            r.raise_for_status()
+            return r
+        except Exception as e:
+            logging.error("GET on {} returned {}".format(url, e))
+            return None
+
+    def post(self, url, parms = {}, files=None):
+        url = self.baseurl + "/" + url
+        print "{} {}".format("POST", url)
+        try:
+            #print_dict(parms)
+            r = self.session.post(url, data=parms, files=files)
+            r.raise_for_status()
+            return r
+        except Exception as e:
+            logging.error("POST on {} returned {}".format(url, e))
+            return None
+
+    def delete(self, url, parms = {}):
+        url = self.baseurl + "/" + url
+        print "{} {}".format("DELETE", url)
+        try:
+            r = self.session.delete(url, data=parms)
+            r.raise_for_status()
+            return r
+        except Exception as e:
+            logging.error("DELETE on {} returned {}".format(url, e))
+            return None
+
 class DotDict(dict):
     def __getattr__(self, name):
         return self[name]
@@ -14,7 +64,6 @@ class DotDict(dict):
 def print_dict(mydict):
     stext = json.dumps(mydict, indent=2, ensure_ascii=False, separators=(',', ': ')).encode('utf-8')
     print(stext)
-
 
 Parms = DotDict({
     'reset' : False,
@@ -25,24 +74,6 @@ Parms = DotDict({
     })
 
 (cmddir, cmdname) = os.path.split(__file__)
-
-def invoke_api(session, op, url, parms = {}):
-    print "op = {}, url = {}".format(op, url)
-    url = Parms.server_baseurl + "/" + url
-    try:
-        if op == 'get':
-            r = session.get(url, params=parms)
-        elif op == 'post':
-            print parms
-            r = session.post(url, data=parms)
-        elif op == 'delete':
-            r = session.delete(url, data=parms)
-        print(r.url)
-        r.raise_for_status()
-        return r
-    except Exception as e:
-        print("GET on {} returned {}".format(url, e))
-        return None
 
 def usage():
     print(cmdname + " [-r] [-u <userid>:<password>] [-d <dbname>] <server_baseurl> ...")
@@ -68,15 +99,13 @@ def main(argv):
 
     if not args:
         usage()
-    Parms.server_baseurl = args[0]
 
-    session = requests.Session()
+    Parms.server_baseurl = args[0]
+    client = VedavaapiClient(Parms.server_baseurl)
 
     # First Authenticate with the Vedavaapi Server
     if Parms.auth.user:
-        print "Authenticating to Vedavaapi with username {} and password {}".format(Parms.auth.user, Parms.auth.passwd)
-        r = invoke_api(session, 'post', "auth/v1/password_login", {'user_id' : Parms.auth.user, 'user_secret': Parms.auth.passwd })
-        if not r:
+        if not client.authenticate(Parms.auth):
             print "Authentication failed; exiting."
             sys.exit(1)
     else:
@@ -86,11 +115,13 @@ def main(argv):
     if not Parms.dbname:
         print "Supply database to use via -d option."
         usage()
-    r = invoke_api(session, 'get', "ullekhanam/v1/dbs/{}/books".format(Parms.dbname))
+    r = client.get("ullekhanam/v1/dbs/{}/entities/{}".format(Parms.dbname,
+            "59f92073caae641d29ba7f8e"), 
+            { 'depth' : 2 })
     if r:
         print_dict(r.json())
-        books = common_data_containers.JsonObject.make_from_dict_list(r.json())
-        print "retrieved {} ".format(len(books))
+        #books = common_data_containers.JsonObject.make_from_dict_list(r.json())
+        #print "retrieved {} ".format(len(books))
         #print_dict(user[0].to_json_map())
 
 if __name__ == "__main__":
