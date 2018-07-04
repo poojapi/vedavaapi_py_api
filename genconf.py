@@ -2,7 +2,7 @@ import os
 import sys
 import getpass
 
-modname = "vedavaapi_py_api"
+modname = "vedavaapi"
 apache_conf_template = "wsgi/wsgi_apache_template.conf"
 confdir = os.path.join(modname, "conf_local")
 
