@@ -5,8 +5,6 @@ Sets up database with add_db() and getdb().
 import logging
 import os
 
-from cloudant.database import CouchDatabase
-from pymongo.collection import Collection
 from sanskrit_data.schema.books import BookPortion
 from sanskrit_data.schema.ullekhanam import TextAnnotation
 
@@ -50,3 +48,7 @@ def get_file_store(db_name_frontend="ullekhanam"):
     return dbs[db_name_frontend].external_file_store
   else:
     return None
+
+class ScannedBook(object):
+    def __init__(self):
+        pass

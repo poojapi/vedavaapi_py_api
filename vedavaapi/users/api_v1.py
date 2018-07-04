@@ -8,13 +8,14 @@ from jsonschema import ValidationError
 from sanskrit_data.schema.common import JsonObject
 from sanskrit_data.schema.users import User, AuthenticationInfo
 
-from vedavaapi_py_api.users import get_db
-from vedavaapi_py_api.users.oauth import OAuthSignIn
+from vedavaapi.users import get_db
+from vedavaapi.users.oauth import OAuthSignIn
 
 logging.basicConfig(
   level=logging.INFO,
   format="%(levelname)s: %(asctime)s {%(filename)s:%(lineno)d}: %(message)s "
 )
+
 
 URL_PREFIX = '/v1'
 api_blueprint = Blueprint(name='auth', import_name=__name__)
@@ -26,7 +27,6 @@ api = flask_restplus.Api(app=api_blueprint, version='1.0', title='vedavaapi py u
                                      'A list of REST and non-REST API routes avalilable on this server: <a href="../sitemap">sitemap</a>.',
                          default_label=api_blueprint.name,
                          prefix=URL_PREFIX, doc='/docs')
-
 
 def is_user_admin():
   user = JsonObject.make_from_dict(session.get('user', None))
@@ -389,3 +389,5 @@ class SchemaListHandler(flask_restplus.Resource):
     schemas = common.get_schemas(common)
     schemas.update(common.get_schemas(users))
     return schemas, 200
+
+__all__ = ["api_blueprint"]

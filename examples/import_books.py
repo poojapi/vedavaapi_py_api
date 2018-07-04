@@ -60,22 +60,22 @@ def import_books(rootdir):
 (cmddir, cmdname) = os.path.split(__file__)
 
 def usage():
-    print(cmdname + " [-r] [-u <server_url>] <books_rootdir>")
+    print(cmdname + " [-r] [-u <username>:<password>] [-d <dbname>] -s <serverurl> <books_rootdir>")
     exit(1)
 
 def main(argv):
-    try:
-        opts, args = getopt.getopt(argv, "hu:ds:", ["url="])
-    except getopt.GetoptError:
-        usage()
-
     Parms = DotDict({
         'reset' : False,
         'dbgFlag' : True,
         'server_baseurl' : '',
         'auth' : DotDict({'user' : 'vedavaapiAdmin', 'passwd' : '@utoDump1'}),
-        'dbname' : 'ullekhanam_test'
-        })
+                    'dbname' : 'ullekhanam_test' })
+
+    try:
+        opts, args = getopt.getopt(argv, "hru:d:s:", ["url="])
+    except getopt.GetoptError:
+        logging.info("Error in command line: ", getopt.GetoptError)
+        usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
@@ -87,9 +87,17 @@ def main(argv):
         elif opt in ("-d", "--db"):
             Parms.dbname = arg
         elif opt in ("-s", "--serverurl"):
+            logging.info("server url = ", arg)
             Parms.server_baseurl = arg
+        else:
+            logging.info("Unknown parameter: ", opt)
+            usage()
 
-    if not Parms.server_baseurl or not args:
+    if not Parms.server_baseurl:
+        logging.info("Error: Supply server URL via -s.")
+        usage()
+    if not args:
+        logging.info("Error: Missing book path to import...")
         usage()
 
     vvclient = VedavaapiClient(Parms.server_baseurl)
@@ -103,16 +111,29 @@ def main(argv):
                 pages.append(('in_files', \
                     open(os.path.join(book.content.path, page.content.path), 'rb')))
             #print_dict(book.content.to_json_map())
-            r = vvclient.post("textract/v1/dbs/{}/books".format(Parms.dbname), parms={'book_json' : json.dumps(book.content.to_json_map())}, files=pages)
+            r = vvclient.post("ullekhanam/v1/dbs/{}/books".format(Parms.dbname), parms={'book_json' : json.dumps(book.content.to_json_map())}, files=pages)
             if not r:
                 sys.exit(1)
             book_json = json.loads(r.text)
             book = JsonObject.make_from_dict(book_json["content"])
             #print_dict(book_json['content'])
+            url = "ullekhanam/v1/dbs/{}/entities/{}".format(Parms.dbname,
+                book._id)
 
-            r = vvclient.get("ullekhanam/v1/dbs/{}/entities/{}".format(Parms.dbname,
-                    book._id), {'depth' : 1})
-            if r:
+            r = vvclient.get(url, {'depth' : 1})
+            if not r:
+                logging.error("Error: invoking {}".format(url))
+                continue
+
+            book_info = r.json()
+            for p in book_info['children']:
+                logging.info("page id " + p['content']['title'])
+                page_id = p['content']['_id']
+                url = "ullekhanam/v1/dbs/{}/pages/{}/annotations".format(Parms.dbname,
+                    page_id)
+                r = vvclient.get(url)
+                if not r:
+                    sys.exit(1)
                 print_dict(r.json())
 if __name__ == "__main__":
    main(sys.argv[1:])

@@ -17,7 +17,7 @@ from flask_cors import CORS
 """
 app = flask.Flask(
   # We pass the root module name - sets root directory.
-  import_name="vedavaapi_py_api.run")
+  import_name="vedavaapi.run")
 
 # Let Javascsipt hosted elsewhere access our API.
 CORS(app=app,

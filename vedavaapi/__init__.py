@@ -22,11 +22,11 @@ Setup
           or ``cd sasnkrit_data; sudo pip3 install -e .``
 
 -  Data setup: Grant the account running run.py authority to write in
-   /opt/scan2text/.
+   /opt/vedavaapi/.
 
-   -  ``sudo mkdir /opt/scan2text/; sudo mkdir /opt/scan2text/data; sudo chmod a+rwx /opt/scan2text``
-   -  ``rm -Rf /opt/scan2text/data/books/ullekhanam_test_v2``
-   -  ``cp -R ~/vedavaapi_py_api/textract-example-repo/books_v2 /opt/scan2text/data/books/ullekhanam_test_v2``
+   -  ``sudo mkdir /opt/vedavaapi/; sudo mkdir /opt/vedavaapi/data; sudo chmod a+rwx /opt/vedavaapi``
+   -  ``rm -Rf /opt/vedavaapi/data/books/ullekhanam_test_v2``
+   -  ``cp -R ~/vedavaapi_py_api/textract-example-repo/books_v2 /opt/vedavaapi/data/books/ullekhanam_test_v2``
 
 -  Install mongodb 3.4.
 -  [Optional, deprecated alternative] Install and set up couchdb:
@@ -66,3 +66,4 @@ REST API docs:
 .. _vedavaapi_servercfg: https://github.com/vedavaapi/vedavaapi-misc
 .. _here: http://api.vedavaapi.org/py/textract/docs
 """
+__path__ = __import__('pkgutil').extend_path(__path__, __name__)

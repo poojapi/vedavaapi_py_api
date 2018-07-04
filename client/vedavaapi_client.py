@@ -17,7 +17,7 @@ class VedavaapiClient():
         if self.authenticated or not creds:
             return True
         print "Authenticating to Vedavaapi Server with username {} and password {}".format(creds.user, creds.passwd)
-        r = self.post("auth/v1/password_login", {'user_id' : creds['user'], 'user_secret': creds['passwd'] })
+        r = self.post("users/v1/password_login", {'user_id' : creds['user'], 'user_secret': creds['passwd'] })
         if not r:
             print "Authentication failed."
         self.authenticated = (r is not None)
