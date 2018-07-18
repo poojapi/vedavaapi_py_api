@@ -18,6 +18,12 @@
       }
     ]
   },
+  "sling" : {
+    "scl_url" : "http://localhost/scl",
+    "scl_path" : "/home/sairamas/scl-dev/build",
+    "grammar_db" : "vedavaapi_grammardb",
+    "samvit_db" : "vedavaapi_samvitdb"
+  }
   "ullekhanam" : {
     "ullekhanam_dbs": [
       {
