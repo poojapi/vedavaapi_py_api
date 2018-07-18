@@ -12,7 +12,7 @@ from sys import argv
 import sys, getopt
 from flask import Blueprint, request
 from flask_restplus import Api, Resource, reqparse
-from grammar import *
+#from grammar import *
 import re
 import json
 import logging
@@ -22,6 +22,7 @@ from os.path import join
 
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
+from .sandhi_join import sandhi_join
 
 logging.basicConfig(
   level=logging.DEBUG,
@@ -30,13 +31,13 @@ logging.basicConfig(
 
 URL_PREFIX = '/v1'
 api_blueprint = Blueprint(name='sling_api', import_name=__name__)
-api = Api(app=api_blueprint, version='1.0', title='vedavaapi SLING API',
-                         description='Vedavaapi SLING API. ',
+api = Api(app=api_blueprint, version='1.0', title='Vedavaapi SLING API',
+                         description='Vedavaapi Samskrit Linguistics API. ',
                          prefix=URL_PREFIX, doc='/docs')
 
 __all__ = ["api_blueprint"]
 
-sandhi_rules = []
+sandhi_overrides = []
 
 #api.add_resource(SktPresets, \
 #    '/presets', \
@@ -65,7 +66,8 @@ sandhi_rules = []
 @api.route('/sandhi/join')
 class SandhiJoin(Resource):
   get_parser = api.parser()
-  get_parser.add_argument('words', location='args', action='split', required=True, type='string', help='give space-separated words!')
+  get_parser.add_argument('words', location='args', action='split', \
+    required=True, type='string', help='give space-separated words to join!')
   get_parser.add_argument('encoding', location='args', required=True, \
         choices=['itrans', 'wx', 'slp1', 'devanagari'], \
         type='string', help='Give encoding used for words')
@@ -78,15 +80,14 @@ class SandhiJoin(Resource):
   def get(self):
     """ Sandhi joiner
     
-    :return: the samhita pada
+    :return: the samhita pada along with the sandhis applied.
     """
     args = request.args.to_dict()
     args['words'] = args['words'].replace(',', ' ').split()
     if 'shakha' not in args:
         args['shakha'] = '' 
 
-    from sandhi_join import sandhi_join
-    res = sandhi_join(args['words'], args['encoding'], shakha=args['shakha'], exceptions=sandhi_rules)
+    res = sandhi_join(args['words'], args['encoding'], shakha=args['shakha'], exceptions=sandhi_overrides)
     return res, 200
 
 @api.route('/sandhi/rules')
@@ -94,35 +95,36 @@ class SandhiRule(Resource):
   def get(self):
     """ List existing sandhi rules
     """
-    return sandhi_rules, 200
+    return sandhi_overrides, 200
 
   post_parser = api.parser()
   post_parser.add_argument('shakha', location='args', type='string', \
-        choices=['', 'Rik', 'krishna_yajus.madhyandina', 'shukla_yajus', 'saama', 'atharva'])
+        choices=['', 'Rik', 'krishna_yajus.madhyandina', 'shukla_yajus', \
+        'saama', 'atharva'], help='Select which shaakha this rule applies to')
   post_parser.add_argument('priority', location='form', action='split', \
         type='int', choices=[1, 2, 3, 4, 5], \
         help='Relative priority of this rule')
   post_parser.add_argument('purva_pada', location='form', type='args', 
     help='give a regular expression for purva pada to match')
   post_parser.add_argument('uttara_pada', location='form', type='string', 
-    help='give a regular expression for purva pada to match')
+    help='give a regular expression for uttara pada to match')
   post_parser.add_argument('samhita_pada', location='form', type='string', 
-    help='give a regular expression for the final form')
+    help='give a regular expression for the joined form')
   post_parser.add_argument('encoding', location='args', \
         choices=['itrans', 'wx', 'slp1', 'devanagari'], \
-        type='string', help='Give encoding used for words')
+        type='string', help='Give encoding used for words in this API call')
 
   @api.expect(post_parser, validate=True)
   def post(self):
     """ Add sandhi exception rule
     """
     form = request.form.to_dict()
-    global sandhi_rules
+    global sandhi_overrides
     if not form.keys():
-        sandhi_rules = []
+        sandhi_overrides = []
     else:
-        sandhi_rules.append(form)
-    return {}, 200
+        sandhi_overrides.append(form)
+    return sandhi_overrides, 200
 
 #helpobj = {
 #    'properties' : {

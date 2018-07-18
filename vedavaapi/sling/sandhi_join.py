@@ -2,16 +2,18 @@ import subprocess
 import sys
 import re
 import json
+from os.path import join
 from indic_transliteration import sanscript
+from vedavaapi.common import VedavaapiServices
 
 # Given two words in WX format, this word produces their samhita form in WX form
 # along with the sandhi detected and the sutras and prakriya used.
 def sandhi_join2_wx(word1, word2):
-    args = ["perl", "/home/sairamas/scl-dev/sandhi/mysandhi.pl"]
+    mysvc = VedavaapiServices.lookup("sling")
+    sclpath = mysvc.config['scl_path']
+    args = ["perl", join(sclpath, "sandhi/mysandhi.pl")]
     args.extend(["WX", "any", word1, word2])
-    #print args
-    result=subprocess.Popen(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0]
-    #print result
+    result = subprocess.check_output(args).decode('utf-8')
     output = [re.sub('^:', '', val) for val in result.split(",")]
     res=dict(zip(output[5:],output[0:5]))
     #print res
@@ -34,7 +36,6 @@ def sandhi_join(words, encoding, shakha=None, exceptions=None):
 
     analysis_str = sanscript.transliterate(json.dumps(analysis), sanscript.WX, encoding)
     analysis = json.loads(analysis_str)
-    print analysis
     samhita = sanscript.transliterate(samhita, sanscript.WX, encoding)
     return {'words' : words, 'result' : samhita, 'analysis' : analysis }
 
@@ -42,4 +43,6 @@ if __name__ == "__main__":
     encoding = sys.argv[1].upper()
     encoding = eval('sanscript.' + encoding)
     samhita = sandhi_join(sys.argv[2:], encoding)
-    print json.dumps(samhita, indent=4, ensure_ascii=False, separators=(',', ': '))
+    print(json.dumps(samhita, indent=4, ensure_ascii=False, separators=(',', ': ')))
+
+__all__ = ['sandhi_join']

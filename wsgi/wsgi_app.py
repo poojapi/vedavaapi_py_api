@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import logging
 import os
 import sys
@@ -15,6 +16,6 @@ os.chdir(app_path)
 logging.info("My path is " + app_path)
 sys.path.insert (0, app_path)
 sys.stdout = sys.stderr
-from vedavaapi_py_api import run
+from vedavaapi import run
 
 application = DebuggedApplication(run.app, True)

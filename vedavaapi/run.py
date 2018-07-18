@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -u
+#!/usr/bin/python -u
 
 """
 This is the main entry point. It does the following
@@ -40,14 +40,14 @@ params.set_from_dict({
 def start_service(name):
     logging.info("Starting vedavaapi.{} service ...".format(name))
     svc_cls = "Vedavaapi" + str.capitalize(name)
-    _tmp = __import__('vedavaapi.{}'.format(name), globals(), locals(), [svc_cls], -1)
+    _tmp = __import__('vedavaapi.{}'.format(name), globals(), locals(), [svc_cls])
     svc_cls = eval('_tmp.'+svc_cls)
     svc_conf = common.server_config[name] if name in common.server_config else {}
     svc_obj = svc_cls(name, svc_conf)
     common.VedavaapiServices.register(name, svc_obj)
 
     if params.reset:
-        print "Resetting previous state of {} ...".format(name)
+        logging.info("Resetting previous state of {} ...".format(name))
         svc_obj.reset()
     svc_obj.setup()
     svc_obj.register_api(app, "/{}".format(name))

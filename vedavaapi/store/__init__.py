@@ -15,4 +15,4 @@ class VedavaapiStore(VedavaapiService):
             from sanskrit_data.db.implementations import mongodb
             self.client = mongodb.Client(url=self.config["mongo_host"])
         
-#api_blueprints = []
+api_blueprints = []

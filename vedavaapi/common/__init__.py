@@ -58,9 +58,9 @@ class VedavaapiService(object):
     def register_api(self, flaskApp, url_prefix):
         modname = "vedavaapi.{}".format(self.name)
         try: 
-            mod = __import__(modname, globals(), locals(), ["*"], -1)
-        except ModuleError: 
-            logging.info("Cannot load module ",modname,": ", e)
+            mod = __import__(modname, globals(), locals(), ["*"])
+        except Exception as e: 
+            logging.info("Cannot load module ",modname)
             return
 
         try:

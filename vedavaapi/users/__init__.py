@@ -13,14 +13,17 @@ logging.basicConfig(
 
 users_db = None
 default_permissions = None
+ServiceObj = None
 
 class VedavaapiUsers(VedavaapiService):
     def __init__(self, name, conf):
         super(VedavaapiUsers, self).__init__(name, conf)
         self.vvstore = VedavaapiServices.lookup("store")
+        global ServiceObj
+        ServiceObj = self
 
     def reset(self):
-        print "Deleting database/collection", self.config["users_db_name"]
+        logging.info("Deleting database/collection", self.config["users_db_name"])
         self.vvstore.client.delete_database(self.config["users_db_name"])
 
     def setup(self):
@@ -61,6 +64,6 @@ def get_db():
 def get_default_permissions():
   return default_permissions
 
-from api_v1 import api_blueprint as apiv1_blueprint
+from .api_v1 import api_blueprint as apiv1_blueprint
 
 api_blueprints = [apiv1_blueprint]

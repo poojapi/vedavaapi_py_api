@@ -33,6 +33,6 @@ class VedavaapiSling(VedavaapiService):
     def reset(self):
         pass
 
-from api_v1 import api_blueprint as apiv1_blueprint
+from .api_v1 import api_blueprint as apiv1_blueprint
 
 api_blueprints = [apiv1_blueprint]
