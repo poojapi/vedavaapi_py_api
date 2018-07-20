@@ -4,13 +4,12 @@ import re
 import json
 from os.path import join
 from indic_transliteration import sanscript
-from vedavaapi.common import VedavaapiServices
+from vedavaapi.sling import get_service()
 
 # Given two words in WX format, this word produces their samhita form in WX form
 # along with the sandhi detected and the sutras and prakriya used.
 def sandhi_join2_wx(word1, word2):
-    mysvc = VedavaapiServices.lookup("sling")
-    sclpath = mysvc.config['scl_path']
+    sclpath = get_service().config['scl_path']
     args = ["perl", join(sclpath, "sandhi/mysandhi.pl")]
     args.extend(["WX", "any", word1, word2])
     result = subprocess.check_output(args).decode('utf-8')

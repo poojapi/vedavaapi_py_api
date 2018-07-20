@@ -1,0 +1,20 @@
+WSGIDaemonProcess grammar user=sai group=dip threads=5
+WSGIScriptAlias /grammar /home/sai/indictools/grammar/app.wsgi
+
+<Directory /home/sai/indictools/grammar>
+    WSGIProcessGroup grammar
+    WSGIApplicationGroup %{GLOBAL}
+    Require all granted
+    #Order deny,allow
+    #Allow from all
+#        WSGIRestrictStdout Off
+</Directory>
+
+Alias /grammar/static /home/sai/indictools/grammar/static
+
+<Directory /home/sai/indictools/grammar/static>
+    Options +Indexes
+    Order deny,allow
+    Allow from all
+</Directory>
+# vim: syntax=apache ts=4 sw=4 sts=4 sr noet

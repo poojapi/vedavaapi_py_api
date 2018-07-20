@@ -21,10 +21,14 @@ logging.basicConfig(
 from vedavaapi.common import *
 #from grammar import grammar
 
+ServiceObj = None
+
 class VedavaapiSling(VedavaapiService):
     def __init__(self, name, conf):
         super(VedavaapiSling, self).__init__(name, conf)
         self.vvstore = VedavaapiServices.lookup("store")
+        global ServiceObj
+        ServiceObj = self
         
     def setup(self):
 #        grammar(True)
@@ -32,6 +36,9 @@ class VedavaapiSling(VedavaapiService):
 
     def reset(self):
         pass
+
+def get_service():
+    return ServiceObj
 
 from .api_v1 import api_blueprint as apiv1_blueprint
 

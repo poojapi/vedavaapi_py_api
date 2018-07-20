@@ -2,6 +2,7 @@ import logging
 
 from flask import url_for, session
 from flask_oauthlib.client import OAuth
+from vedavaapi.users import get_db, get_service, get_default_permissions
 
 logging.basicConfig(
   level=logging.DEBUG,
@@ -41,8 +42,7 @@ class OAuthSignIn(object):
     
     Ensures that we use singletons.
     """
-    from vedavaapi_py_api import common
-    oauth_config = common.server_config["oauth"]
+    oauth_config = get_service().config["oauth"]
     if cls.providers is None:
       cls.providers = {}
       for provider_class in cls.__subclasses__():
@@ -106,8 +106,7 @@ class GoogleSignIn(OAuthSignIn):
   def get_user(self):
     data = self.get_user_data()
     logging.debug(data)
-    from vedavaapi_py_api.users import users_db, get_default_permissions
-    user = users_db.get_user_from_auth_info(AuthenticationInfo.from_details(auth_user_id=data['email'],
+    user = get_db().get_user_from_auth_info(AuthenticationInfo.from_details(auth_user_id=data['email'],
                                                                             auth_provider=self.provider_name))
     logging.debug(user)
     if user is None:
