@@ -45,7 +45,6 @@ def sandhi_joiner():
     global _sandhi_joiner
     if not _sandhi_joiner:
         svc = VedavaapiServices.lookup("sling")
-        print(svc.config)
         _sandhi_joiner = SandhiJoiner(svc.config["scl_path"])
     return _sandhi_joiner
 

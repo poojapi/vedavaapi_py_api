@@ -96,7 +96,7 @@ class SandhiJoiner:
             sanscript.transliterate(word2, sanscript.SLP1, sanscript.WX), 
             ])
         result = subprocess.check_output(args).decode('utf-8')
-        print(result)
+        #print(result)
         output = [sanscript.transliterate(re.sub('^:', '', val), \
             sanscript.WX, sanscript.SLP1) for val in result.split(",")]
         res=dict(zip(output[5:],output[0:5]))
