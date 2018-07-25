@@ -2,10 +2,10 @@
 REST API
 --------
 
-See general notes from the ullekhanam module apply. Additional API docs
+Some general notes from the ullekhanam module apply. Additional API docs
 `here`_ .
 
-.. _here: http://api.vedavaapi.org/py/textract/docs
+.. _here: http://api.vedavaapi.org/py/sling/docs
 """
 
 from sys import argv
@@ -22,7 +22,8 @@ from os.path import join
 
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-from .sandhi_join import sandhi_join
+from vedavaapi.sling import *
+from .sandhi_join import SandhiJoiner
 
 logging.basicConfig(
   level=logging.DEBUG,
@@ -38,6 +39,23 @@ api = Api(app=api_blueprint, version='1.0', title='Vedavaapi SLING API',
 __all__ = ["api_blueprint"]
 
 sandhi_overrides = []
+
+_sandhi_joiner = None
+def sandhi_joiner():
+    global _sandhi_joiner
+    if not _sandhi_joiner:
+        svc = VedavaapiServices.lookup("sling")
+        print(svc.config)
+        _sandhi_joiner = SandhiJoiner(svc.config["scl_path"])
+    return _sandhi_joiner
+
+shakhas = [
+        'sarva', 
+        'Rigvediiya shaakala', 
+        'yajurvedIya taittirIya', 
+        'atharvavedIya shaunaka', 
+        'sAmavedIya kauthuma', 
+        'yajurvedIya mAdhyandina']
 
 #api.add_resource(SktPresets, \
 #    '/presets', \
@@ -72,7 +90,7 @@ class SandhiJoin(Resource):
         choices=['itrans', 'wx', 'slp1', 'devanagari'], \
         type='string', help='Give encoding used for words')
   get_parser.add_argument('shakha', location='args', type='string', \
-        choices=['', 'Rik', 'krishna_yajus.madhyandina', 'shukla_yajus', 'saama', 'atharva'])
+        choices=shakhas)
 
   @api.expect(get_parser, validate=True)
   # Marshalling as below does not work.
@@ -87,44 +105,42 @@ class SandhiJoin(Resource):
     if 'shakha' not in args:
         args['shakha'] = '' 
 
-    res = sandhi_join(args['words'], args['encoding'], shakha=args['shakha'], exceptions=sandhi_overrides)
+    res = sandhi_joiner().join(args['words'], args['encoding'], shakha=args['shakha'])
     return res, 200
 
 @api.route('/sandhi/rules')
 class SandhiRule(Resource):
+  get_parser = api.parser()
+  get_parser.add_argument('shakha', location='args', type='string', \
+        choices=shakhas,
+        help='Show only rules that apply to this shaakha')
   def get(self):
     """ List existing sandhi rules
     """
-    return sandhi_overrides, 200
+    return sandhi_joiner().overrides, 200
 
-  post_parser = api.parser()
-  post_parser.add_argument('shakha', location='args', type='string', \
-        choices=['', 'Rik', 'krishna_yajus.madhyandina', 'shukla_yajus', \
-        'saama', 'atharva'], help='Select which shaakha this rule applies to')
-  post_parser.add_argument('priority', location='form', action='split', \
-        type='int', choices=[1, 2, 3, 4, 5], \
-        help='Relative priority of this rule')
-  post_parser.add_argument('purva_pada', location='form', type='args', 
-    help='give a regular expression for purva pada to match')
-  post_parser.add_argument('uttara_pada', location='form', type='string', 
-    help='give a regular expression for uttara pada to match')
-  post_parser.add_argument('samhita_pada', location='form', type='string', 
-    help='give a regular expression for the joined form')
-  post_parser.add_argument('encoding', location='args', \
-        choices=['itrans', 'wx', 'slp1', 'devanagari'], \
-        type='string', help='Give encoding used for words in this API call')
-
-  @api.expect(post_parser, validate=True)
-  def post(self):
-    """ Add sandhi exception rule
+@api.route('/sandhi/macros')
+class SandhiRule(Resource):
+  get_parser = api.parser()
+  get_parser.add_argument('shakha', location='args', type='string', \
+        choices=shakhas,
+        help='Show only rules that apply to this shaakha')
+  def get(self):
+    """ List existing sandhi rules
     """
-    form = request.form.to_dict()
-    global sandhi_overrides
-    if not form.keys():
-        sandhi_overrides = []
-    else:
-        sandhi_overrides.append(form)
-    return sandhi_overrides, 200
+    return sandhi_joiner().macros, 200
+
+#  @api.expect(post_parser, validate=True)
+#  def post(self):
+#    """ Add sandhi exception rule
+#    """
+#    form = request.form.to_dict()
+#    global sandhi_overrides
+#    if not form.keys():
+#        sandhi_overrides = []
+#    else:
+#        sandhi_overrides.append(form)
+#    return sandhi_overrides, 200
 
 #helpobj = {
 #    'properties' : {

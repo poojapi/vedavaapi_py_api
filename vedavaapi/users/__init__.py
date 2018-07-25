@@ -21,7 +21,7 @@ class VedavaapiUsers(VedavaapiService):
         ServiceObj = self
 
     def reset(self):
-        logging.info("Deleting database/collection", self.config["users_db_name"])
+        logging.info("Deleting database/collection " + self.config["users_db_name"])
         self.vvstore.client.delete_database(self.config["users_db_name"])
 
     def setup(self):

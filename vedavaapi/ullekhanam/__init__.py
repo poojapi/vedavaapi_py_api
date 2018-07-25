@@ -36,7 +36,7 @@ class VedavaapiUllekhanam(VedavaapiService):
 
     def reset(self):
         for db_details in self.config["ullekhanam_dbs"]:
-            logging.info("Deleting database/collection", db_details["backend_id"])
+            logging.info("Deleting database/collection " + db_details["backend_id"])
             self.vvstore.client.delete_database(db_details["backend_id"])
             if "file_store" in db_details:
                 try:
