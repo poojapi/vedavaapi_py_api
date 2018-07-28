@@ -38,14 +38,12 @@ api = Api(app=api_blueprint, version='1.0', title='Vedavaapi SLING API',
 
 __all__ = ["api_blueprint"]
 
-sandhi_overrides = []
-
 _sandhi_joiner = None
 def sandhi_joiner():
     global _sandhi_joiner
     if not _sandhi_joiner:
         svc = VedavaapiServices.lookup("sling")
-        _sandhi_joiner = SandhiJoiner(svc.config["scl_path"])
+        _sandhi_joiner = SandhiJoiner(svc.config["scl_path"], svc.config["sandhi_gsheet_id"])
     return _sandhi_joiner
 
 shakhas = [
@@ -106,6 +104,13 @@ class SandhiJoin(Resource):
 
     res = sandhi_joiner().join(args['words'], args['encoding'], shakha=args['shakha'])
     return res, 200
+
+@api.route('/sandhi/refresh')
+class SandhiRule(Resource):
+  def get(self):
+    """ Reload the Sandhi rulebase
+    """
+    return sandhi_joiner().reload(), 200
 
 @api.route('/sandhi/rules')
 class SandhiRule(Resource):

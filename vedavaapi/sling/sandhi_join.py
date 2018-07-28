@@ -2,13 +2,17 @@ import subprocess
 import sys
 import re
 import json
-from os.path import join, realpath, dirname
+import os
+from os.path import join, dirname, realpath
+from functools import reduce #for 3.x
 from indic_transliteration import sanscript
-from functools import reduce
 
-# Format of sandhi_overrides.csv
-#
-# A line that starts with a '#' is ignored as comment.
+SANDHI_OVERRIDES_SHEET_NAME = 'Sandhi_overrides';
+MACROS_SHEET_NAME ='Macros';
+
+# Format of sandhi_overrides sheet
+# First header row has header fields Purva_pattern,Uttara_pattern,Samhita_pattern,Shaakha,Priority
+# A row that starts with a '#' is ignored as comment.
 # Within a purva_pada pattern, one can refer to a macro to
 # refer to a list of items via __M:<macroname>__
 # For example, to refer to chars 'a i u', embed __M:aR1__
@@ -17,29 +21,39 @@ from functools import reduce
 # evaluated via __<expr>__
 #
 class SandhiJoiner:
-    def __init__(self, sclpath):
+    def __init__(self, sclpath, sandhi_gsheet_id):
         self.overrides = []
+        self.macros = {}
         self.sclpath = sclpath
-        with open(join(dirname(realpath(__file__)), "sandhi_overrides.csv"), 'r') as f:
-            for line in f.readlines():
-                if line.startswith('#'):
-                    continue
-                values = line.rstrip('\n').split(',')
-                #print(values)
-                values[3] = values[3].split(",")
-                self.overrides.append(line.rstrip('\n').split(','))
+        self.sandhi_gsheet = sandhi_gsheet_id
+        self.reload()
+    
+    def reload(self):
+        del self.overrides[:] #clears list without changing referance.
+        self.macros.clear() #clears macros dict with out changing referance, to effect all referances.
+        
+        #so: sandhi_overrides
+        from google_services_helper import gsheets
+        so_response_table , so_response_code = gsheets.values.sheet_values_for(
+            self.sandhi_gsheet, SANDHI_OVERRIDES_SHEET_NAME, 
+            pargs={'idType':'title', 'valuesFormat':'rows'})
+        
+        so_rows_list = so_response_table.get('values', [])
+        for row in so_rows_list:
+            self.overrides.append(row)
 
         self.macros = {}
-        with open(join(dirname(realpath(__file__)), "macros.csv"), 'r') as f:
-            for line in f.readlines():
-                if line.startswith('#'):
-                    continue
-                row = line.rstrip('\n').split(',')
-                vals = row[1].split()
-                chars = reduce(lambda x, y: x and y, [len(x) > 1 for x in vals])
-                vals = "|".join(vals) if chars else "[" + "".join(vals) + "]"
-                self.macros[row[0]] = vals
-                #print(row[0], ": ", vals)
+        #ph:Pratyaharas
+        ph_response_table, ph_response_code = gsheets.values.sheet_values_for(
+            self.sandhi_gsheet, MACROS_SHEET_NAME, 
+            pargs={'idType':'title', 'valuesFormat':'maps'})
+        
+        ph_maps_list = ph_response_table.get('values', [])
+        for amap in ph_maps_list:
+            vals = amap.get('value', '').split()
+            chars = reduce(lambda x, y: x and y, [len(x) > 1 for x in vals])
+            vals = "|".join(vals) if chars else "[" + "".join(vals) + "]"
+            self.macros[amap.get('macro')] = vals
 
     def expand_macro(self, matchObj):
         [op, parms] = matchObj.group(1).split(':')
@@ -127,7 +141,10 @@ class SandhiJoiner:
 if __name__ == "__main__":
     encoding = sys.argv[1].upper()
     encoding = eval('sanscript.' + encoding)
-    sandhi = SandhiJoiner(sclpath="/home/samskritam/scl-dev-local/build")
+    sys.path.append(join(dirname(realpath(__file__)), "../.."))
+
+    sandhi = SandhiJoiner(sclpath="/home/samskritam/scl-dev-local/build", 
+        sandhi_gsheet_id='1yP82Y5d5mGrvNV2e-OPc6rBhPEtTYWI2vEwYN7uZdnU')
     while (1):
         try:
             line = str(raw_input('Words to join: '))
