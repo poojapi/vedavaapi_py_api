@@ -22,6 +22,7 @@ app = flask.Flask(
 # Let Javascsipt hosted elsewhere access our API.
 CORS(app=app,
      # injects the `Access-Control-Allow-Credentials` header in responses. This allows cookies and credentials to be submitted across domains.
+     send_wildcard=True,
      supports_credentials=True)
 
 app.config.update(

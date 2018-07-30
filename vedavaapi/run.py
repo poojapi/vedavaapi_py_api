@@ -55,7 +55,7 @@ def start_service(name):
 def setup_app():
     common.set_configuration(config_file_name=os.path.join(os.path.dirname(__file__), 'conf_local/server_config.json'))
 
-    services = ['store', 'sling', 'users', 'ullekhanam']
+    services = ['store', 'users', 'ullekhanam']
 
     logging.info("Root path: " + app.root_path)
     for svc in services:
